@@ -17,6 +17,7 @@ import { z } from "zod";
 
 interface Props {
   className?: string;
+  onSuccess?: () => void;
 }
 
 const LoginFormSchema = z.object({
@@ -25,7 +26,7 @@ const LoginFormSchema = z.object({
 });
 type LoginFormSchemaType = z.infer<typeof LoginFormSchema>;
 
-export function LoginForm({ className }: Props) {
+export function LoginForm({ className, onSuccess }: Props) {
   const form = useForm<LoginFormSchemaType>({
     resolver: zodResolver(LoginFormSchema),
     defaultValues: {
@@ -38,6 +39,7 @@ export function LoginForm({ className }: Props) {
     const { name, email } = data;
     try {
       await client.login({ name, email });
+      onSuccess?.();
     } catch (e) {
       console.error(e);
       form.setError("root", {

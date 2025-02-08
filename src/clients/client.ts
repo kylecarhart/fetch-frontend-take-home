@@ -7,12 +7,14 @@ import {
 } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
+export class UnauthorizedError extends Error {}
 
 /**
  * Fetch wrapper for the API
  * @param endpoint - The endpoint to request
  * @param options - The options for the request
  * @returns The response from the API
+ * @throws If the request is unauthorized
  */
 async function request(endpoint: string, options: RequestInit = {}) {
   const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -24,7 +26,9 @@ async function request(endpoint: string, options: RequestInit = {}) {
     },
   });
 
-  if (!res.ok) {
+  if (res.status === 401) {
+    throw new UnauthorizedError();
+  } else if (!res.ok) {
     throw res;
   }
 
@@ -94,12 +98,17 @@ async function searchDogs(params: {
 }): Promise<SearchDogsResponse> {
   const searchParams = new URLSearchParams();
 
-  if (params.breeds?.length) {
-    searchParams.append("breeds", JSON.stringify(params.breeds));
-  }
-  if (params.zipCodes?.length) {
-    searchParams.append("zipCodes", JSON.stringify(params.zipCodes));
-  }
+  // Add breeds to the search params
+  params.breeds?.forEach((breed) => {
+    searchParams.append("breeds", breed);
+  });
+
+  // Add zip codes to the search params
+  params.zipCodes?.forEach((zipCode) => {
+    searchParams.append("zipCodes", zipCode);
+  });
+
+  // Add age min to the search params
   if (params.ageMin) {
     searchParams.append("ageMin", params.ageMin.toString());
   }
