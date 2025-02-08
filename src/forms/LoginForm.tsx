@@ -1,5 +1,4 @@
-import { cn } from "@/lib/utils";
-
+import { client } from "@/clients/client";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -10,6 +9,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DogIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -34,9 +34,17 @@ export function LoginForm({ className }: Props) {
     },
   });
 
-  const onSubmit = (data: LoginFormSchemaType) => {
-    console.log(data);
-  };
+  async function onSubmit(data: LoginFormSchemaType) {
+    const { name, email } = data;
+    try {
+      await client.login({ name, email });
+    } catch (e) {
+      console.error(e);
+      form.setError("root", {
+        message: "Failed to login. Please try again later.",
+      });
+    }
+  }
 
   return (
     <Form {...form}>
@@ -70,7 +78,7 @@ export function LoginForm({ className }: Props) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
                     </FormControl>
@@ -95,6 +103,9 @@ export function LoginForm({ className }: Props) {
                 )}
               />
             </div>
+            {form.formState.errors.root && (
+              <FormMessage>{form.formState.errors.root.message}</FormMessage>
+            )}
             <Button type="submit" className="w-full">
               Login
             </Button>
