@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -13,7 +15,9 @@ import { DogIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-interface Props {}
+interface Props {
+  className?: string;
+}
 
 const LoginFormSchema = z.object({
   name: z.string().min(1),
@@ -21,7 +25,7 @@ const LoginFormSchema = z.object({
 });
 type LoginFormSchemaType = z.infer<typeof LoginFormSchema>;
 
-export function LoginForm({}: Props) {
+export function LoginForm({ className }: Props) {
   const form = useForm<LoginFormSchemaType>({
     resolver: zodResolver(LoginFormSchema),
     defaultValues: {
@@ -36,9 +40,10 @@ export function LoginForm({}: Props) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className={cn(className)}>
         <div className="flex flex-col gap-6">
-          <div className="flex flex-col items-center gap-2">
+          {/* Header */}
+          <div className="flex flex-col items-center gap-2 text-center">
             <a
               href="#"
               className="flex flex-col items-center gap-2 font-medium"
@@ -49,15 +54,17 @@ export function LoginForm({}: Props) {
               <span className="sr-only">Shelter Match</span>
             </a>
             <h1 className="text-xl font-bold">Welcome to Shelter Match!</h1>
-            <div className="text-center text-sm">
+            <div className="text-sm">
               Don't have an account?{" "}
               <a href="#" className="underline underline-offset-4">
                 Sign up
               </a>
             </div>
           </div>
+          {/* Form */}
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
+              {/* Name */}
               <FormField
                 control={form.control}
                 name="name"
@@ -73,6 +80,7 @@ export function LoginForm({}: Props) {
               />
             </div>
             <div className="grid gap-2">
+              {/* Email */}
               <FormField
                 control={form.control}
                 name="email"
