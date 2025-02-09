@@ -10,23 +10,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { BoneIcon, DogIcon } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "../../auth";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_auth/")({
+  beforeLoad: ({ context, location }) => {
+    if (!context.auth.isAuthenticated) {
+      throw redirect({
+        to: "/login",
+        search: {
+          redirect: location.href,
+        },
+      });
+    }
+  },
   component: RouteComponent,
-  // loader: async () => {
-  //   const breeds = await client.getBreeds();
-  //   return breeds;
-  // },
 });
 
 function RouteComponent() {
+  const router = useRouter();
+  const navigate = Route.useNavigate();
+  const auth = useAuth();
   const [selectedBreed, setSelectedBreed] = useState<string>();
   const [page, setPage] = useState(1);
   const [ageMin, setAgeMin] = useState<number>();
   const [ageMax, setAgeMax] = useState<number>();
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      auth.logout().then(() => {
+        router.invalidate().finally(() => {
+          navigate({ to: "/" });
+        });
+      });
+    }
+  };
 
   const { data: breeds } = useQuery({
     queryKey: ["breeds"],

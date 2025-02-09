@@ -26,8 +26,11 @@ async function request(endpoint: string, options: RequestInit = {}) {
     },
   });
 
+  // If user is not logged in, reset state and reload.
   if (res.status === 401) {
-    throw new UnauthorizedError();
+    localStorage.removeItem("auth.user");
+    window.location.reload();
+    // throw new UnauthorizedError();
   } else if (!res.ok) {
     throw res;
   }
@@ -58,7 +61,7 @@ async function login({
   name: string;
   email: string;
 }): Promise<void> {
-  const res = await request("/auth/login", {
+  await request("/auth/login", {
     method: "POST",
     body: JSON.stringify({ name, email }),
   });

@@ -1,4 +1,4 @@
-import { client } from "@/clients/client";
+import { useAuth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DogIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -17,7 +18,7 @@ import { z } from "zod";
 
 interface Props {
   className?: string;
-  onSuccess?: () => void;
+  onSuccess?: (user: User) => void;
 }
 
 const LoginFormSchema = z.object({
@@ -27,6 +28,8 @@ const LoginFormSchema = z.object({
 type LoginFormSchemaType = z.infer<typeof LoginFormSchema>;
 
 export function LoginForm({ className, onSuccess }: Props) {
+  const auth = useAuth();
+
   const form = useForm<LoginFormSchemaType>({
     resolver: zodResolver(LoginFormSchema),
     defaultValues: {
@@ -38,8 +41,8 @@ export function LoginForm({ className, onSuccess }: Props) {
   async function onSubmit(data: LoginFormSchemaType) {
     const { name, email } = data;
     try {
-      await client.login({ name, email });
-      onSuccess?.();
+      await auth.login({ name, email });
+      onSuccess?.({ name, email });
     } catch (e) {
       console.error(e);
       form.setError("root", {

@@ -1,3 +1,11 @@
+/** User object representing a user of the application */
+export interface User {
+  /** Name of the user */
+  name: string;
+  /** Email of the user */
+  email: string;
+}
+
 /** Dog object representing a shelter dog available for adoption */
 export interface Dog {
   id: string;
