@@ -2,6 +2,7 @@ import {
   Dog,
   Location,
   Match,
+  SearchDogsParams,
   SearchDogsResponse,
   SearchLocationsResponse,
 } from "../types";
@@ -90,15 +91,9 @@ async function getBreeds(): Promise<string[]> {
  * @param params - The parameters for the search
  * @returns The response from the API
  */
-async function searchDogs(params: {
-  breeds?: string[];
-  zipCodes?: string[];
-  ageMin?: number;
-  ageMax?: number;
-  size?: number;
-  from?: string;
-  sort?: string;
-}): Promise<SearchDogsResponse> {
+async function searchDogs(
+  params: SearchDogsParams,
+): Promise<SearchDogsResponse> {
   const searchParams = new URLSearchParams();
 
   // Add breeds to the search params

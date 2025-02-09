@@ -69,3 +69,21 @@ export interface SearchDogsResponse {
   /** Query string for previous page of results */
   prev?: string;
 }
+
+/** Parameters for searching dogs */
+export interface SearchDogsParams {
+  /** Array of breeds to search for */
+  breeds?: string[];
+  /** Array of ZIP codes to search for */
+  zipCodes?: string[];
+  /** Minimum age of dogs to search for */
+  ageMin?: number;
+  /** Maximum age of dogs to search for */
+  ageMax?: number;
+  /** Number of results to return */
+  size?: number;
+  /** Starting index of results to return */
+  from?: string;
+  /** Sort order of results */
+  sort?: string;
+}
