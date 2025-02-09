@@ -21,6 +21,9 @@ export const Route = createFileRoute("/login")({
   component: RouteComponent,
 });
 
+/**
+ * Login page. Users are redirected here if they are not authenticated.
+ */
 function RouteComponent() {
   const navigate = useNavigate();
   const router = useRouter();
@@ -33,7 +36,10 @@ function RouteComponent() {
 
   return (
     <div className="flex h-screen w-screen items-center justify-center p-4">
-      <LoginForm className="w-full max-w-xs" onSuccess={handleLogin} />
+      <LoginForm
+        className="w-full max-w-xs sm:mb-[15vh]"
+        onSuccess={handleLogin}
+      />
     </div>
   );
 }

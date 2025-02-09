@@ -199,6 +199,8 @@ function SearchForm({ className, onSubmit }: SearchFormProps) {
             )}
           />
           {/* Age Range */}
+          {/* TODO: It would probably be a better user experience if we had a couple of preset age ranges */}
+          {/* ie: Puppy (0-1), Young Adult (2-4), Adult (5-8), Senior (9-15) */}
           <div>
             <FormLabel>Age Range</FormLabel>
             <div className="flex gap-2">
