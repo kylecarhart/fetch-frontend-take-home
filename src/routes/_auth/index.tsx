@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { BoneIcon, DogIcon } from "lucide-react";
+import { ArrowLeft, BoneIcon, DogIcon } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../auth";
 
@@ -39,13 +39,11 @@ function RouteComponent() {
   const [ageMax, setAgeMax] = useState<number>();
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      auth.logout().then(() => {
-        router.invalidate().finally(() => {
-          navigate({ to: "/" });
-        });
+    auth.logout().then(() => {
+      router.invalidate().finally(() => {
+        navigate({ to: "/" });
       });
-    }
+    });
   };
 
   const { data: breeds } = useQuery({
@@ -71,51 +69,56 @@ function RouteComponent() {
   return (
     <div className="grid h-screen grid-cols-[350px,1fr] gap-4">
       {/* Sidebar */}
-      <div className="space-y-4 border-r p-8">
+      <div className="flex flex-col space-y-6 border-r p-8">
         <div className="flex items-center gap-2">
           <DogIcon className="size-6" />
           <h1 className="text-2xl font-bold">Shelter Match</h1>
         </div>
 
-        <div>
-          <Select
-            value={selectedBreed}
-            onValueChange={setSelectedBreed}
-            defaultValue={breeds?.[0]}
-          >
-            <Label>Breed</Label>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a breed" />
-            </SelectTrigger>
-            <SelectContent>
-              {breeds?.map((breed) => (
-                <SelectItem key={breed} value={breed}>
-                  {breed}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Age Range</Label>
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              value={ageMin}
-              placeholder="0"
-              onChange={(e) => setAgeMin(Number(e.target.value))}
-            />
-            -
-            <Input
-              type="number"
-              value={ageMax}
-              placeholder="15"
-              onChange={(e) => setAgeMax(Number(e.target.value))}
-            />
+        <div className="flex-1 space-y-4">
+          <div>
+            <Select
+              value={selectedBreed}
+              onValueChange={setSelectedBreed}
+              defaultValue={breeds?.[0]}
+            >
+              <Label>Breed</Label>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a breed" />
+              </SelectTrigger>
+              <SelectContent>
+                {breeds?.map((breed) => (
+                  <SelectItem key={breed} value={breed}>
+                    {breed}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+          <div>
+            <Label>Age Range</Label>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                value={ageMin}
+                placeholder="0"
+                onChange={(e) => setAgeMin(Number(e.target.value))}
+              />
+              -
+              <Input
+                type="number"
+                value={ageMax}
+                placeholder="15"
+                onChange={(e) => setAgeMax(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <Button>
+            <BoneIcon className="size-4" /> Go!
+          </Button>
         </div>
-        <Button>
-          <BoneIcon className="size-4" /> Go!
+        <Button variant="ghost" onClick={handleLogout} className="self-start">
+          <ArrowLeft className="size-4" /> Logout
         </Button>
       </div>
       {/* Main */}
