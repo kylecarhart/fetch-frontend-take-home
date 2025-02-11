@@ -24,10 +24,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Dog, SearchDogsParams } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -43,6 +48,8 @@ import { Fragment, Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuth } from "../../auth";
+
+const DEFAULT_PAGE_SIZE = 25;
 
 export const Route = createFileRoute("/_auth/")({
   beforeLoad: ({ context, location }) => {
@@ -66,9 +73,9 @@ function RouteComponent() {
     breeds: [],
     ageMin: 0,
     ageMax: 15,
-    // from: 0,
     // zipCodes: [],
-    // size: 25,
+    from: 0,
+    size: DEFAULT_PAGE_SIZE,
     sort: "breed:asc",
   });
   const [selectedDogs, setSelectedDogs] = useState<Dog[]>([]);
@@ -105,24 +112,40 @@ function RouteComponent() {
     });
   }
 
-  const { data: searchDogsResponse } = useQuery({
+  /**
+   * Fetches dogs matching the search params, with infinite scrolling.
+   */
+  const { data: dogs, fetchNextPage } = useInfiniteQuery({
     queryKey: ["searchDogs", dogSearchParams],
-    queryFn: () => {
-      return client.searchDogs({
+    queryFn: async ({ pageParam }) => {
+      const from = pageParam * (dogSearchParams.size ?? DEFAULT_PAGE_SIZE);
+
+      // Search for dogs matching the params
+      const searchDogsResponse = await client.searchDogs({
         ...(dogSearchParams.breeds && { breeds: dogSearchParams.breeds }),
         ...(dogSearchParams.ageMin && { ageMin: dogSearchParams.ageMin }),
         ...(dogSearchParams.ageMax && { ageMax: dogSearchParams.ageMax }),
-        // ...(dogSearchParams.zipCodes && { zipCodes: dogSearchParams.zipCodes }),
-        // ...(dogSearchParams.size && { size: dogSearchParams.size }),
-        // ...(dogSearchParams.from && { from: dogSearchParams.from }),
+        ...(dogSearchParams.size && { size: dogSearchParams.size }),
+        ...(from && { from }),
         ...(dogSearchParams.sort && { sort: dogSearchParams.sort }),
+        // ...(dogSearchParams.zipCodes && { zipCodes: dogSearchParams.zipCodes }),
       });
-    },
-  });
 
-  const dogs = useQuery({
-    queryKey: ["dogs", searchDogsResponse?.resultIds],
-    queryFn: () => client.getDogs(searchDogsResponse?.resultIds ?? []),
+      // Get more info about the dogs returned from the search
+      const dogs = await client.getDogs([
+        ...(searchDogsResponse?.resultIds ?? []),
+      ]);
+
+      return { dogs, next: searchDogsResponse?.next };
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      const params = new URLSearchParams(lastPage.next);
+      const from = params.get("from");
+      return from
+        ? parseInt(from) / (dogSearchParams.size ?? DEFAULT_PAGE_SIZE)
+        : null;
+    },
   });
 
   function onSubmit(data: SearchDogsParams) {
@@ -155,15 +178,20 @@ function RouteComponent() {
       {/* Main */}
       <div className="overflow-y-scroll">
         <div className="grid grid-cols-3 gap-6 p-8 xl:grid-cols-5">
-          {dogs?.data?.map((dog) => (
-            <DogCard
-              key={dog.id}
-              dog={dog}
-              onSelect={handleSelectDog}
-              isSelected={selectedDogs.some((d) => d.id === dog.id)}
-            />
-          ))}
+          <>
+            {dogs?.pages.map((page) => {
+              return page.dogs.map((dog) => (
+                <DogCard
+                  key={dog.id}
+                  dog={dog}
+                  onSelect={handleSelectDog}
+                  isSelected={selectedDogs.some((d) => d.id === dog.id)}
+                />
+              ));
+            })}
+          </>
         </div>
+        <Button onClick={() => fetchNextPage()}>Fetch Next Page</Button>
         {selectedDogs.length > 0 && (
           <div className="sticky bottom-0 border-t bg-white py-2 text-center">
             <Button className="" variant="ghost" onClick={handleMatch}>
@@ -183,6 +211,30 @@ function RouteComponent() {
     </div>
   );
 }
+
+// interface DogCardGridProps {
+//   searchDogsResponse: SearchDogsResponse | undefined;
+// }
+
+// function DogCardGrid({ searchDogsResponse }: DogCardGridProps) {
+//   const dogs = useSuspenseQuery({
+//     queryKey: ["dogs", searchDogsResponse?.resultIds],
+//     queryFn: () => client.getDogs(searchDogsResponse?.resultIds ?? []),
+//   });
+
+//   return (
+//     <>
+//       {dogs?.data?.map((dog) => (
+//         <DogCard
+//           key={dog.id}
+//           dog={dog}
+//           onSelect={() => {}}
+//           isSelected={false}
+//         />
+//       ))}
+//     </>
+//   );
+// }
 
 interface DogCardProps {
   dog: Dog;
@@ -220,6 +272,17 @@ function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
         <HeartIcon className="size-4 text-rose-500" />
         {isSelected ? <span>Selected!</span> : <span>Pick me!</span>}
       </Button>
+    </div>
+  );
+}
+
+function DogCardSkeleton() {
+  return (
+    <div className="flex h-full flex-col justify-between gap-1">
+      <Skeleton className="aspect-square w-full rounded-md" />
+      <Skeleton className="h-4 w-1/2" />
+      <Skeleton className="h-4 w-1/4" />
+      <Skeleton className="h-8 w-full" />
     </div>
   );
 }
@@ -369,8 +432,8 @@ function SearchFormSkeleton() {
     <div className="space-y-4">
       {Array.from({ length: 5 }).map((_, index) => (
         <Fragment key={index}>
-          <div className="h-4 w-1/4 animate-pulse rounded-md bg-gray-200" />
-          <div className="h-8 w-full animate-pulse rounded-md bg-gray-200" />
+          <Skeleton className="h-4 w-1/4" />
+          <Skeleton className="h-8 w-full" />
         </Fragment>
       ))}
     </div>
