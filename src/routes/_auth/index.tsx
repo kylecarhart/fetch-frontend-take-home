@@ -17,7 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { SearchDogsParams } from "@/types";
+import { Dog, SearchDogsParams } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
@@ -27,6 +27,7 @@ import {
   Check,
   ChevronsUpDown,
   DogIcon,
+  HeartIcon,
   XIcon,
 } from "lucide-react";
 import * as React from "react";
@@ -62,6 +63,7 @@ function RouteComponent() {
     // from: 0,
     // sort: "asc",
   });
+  const [selectedDogs, setSelectedDogs] = useState<Dog[]>([]);
 
   const handleLogout = () => {
     auth.logout().then(() => {
@@ -70,6 +72,19 @@ function RouteComponent() {
       });
     });
   };
+
+  /**
+   * Adds/removes dogs from the selected dogs list.
+   * @param dog
+   */
+  function handleSelectDog(dog: Dog) {
+    setSelectedDogs((prev) => {
+      if (prev.some((d) => d.id === dog.id)) {
+        return prev.filter((d) => d.id !== dog.id);
+      }
+      return [...prev, dog];
+    });
+  }
 
   const { data: searchDogsResponse } = useQuery({
     queryKey: ["searchDogs", dogSearchParams],
@@ -116,27 +131,62 @@ function RouteComponent() {
         </Button>
       </div>
       {/* Main */}
-      <div className="grid grid-cols-3 gap-12 overflow-y-scroll p-8 xl:grid-cols-7">
+      <div className="grid grid-cols-2 gap-6 overflow-y-scroll p-8 xl:grid-cols-3">
         {dogs?.data?.map((dog) => (
-          <div
-            key={dog.id}
-            style={{
-              backgroundImage: `url(${dog.img})`,
-            }}
-            className="aspect-square bg-cover bg-center"
-          >
-            <div className="relative">
-              {/* <Heart className="absolute top-0 size-6 text-red-500" /> */}
-            </div>
-            <h2>{dog.name}</h2>
-            <div>
-              <p>{dog.age}</p>
-              <p>{dog.breed}</p>
-              <p>{dog.zip_code}</p>
-            </div>
-          </div>
+          <DogCard
+            dog={dog}
+            onSelect={handleSelectDog}
+            isSelected={selectedDogs.some((d) => d.id === dog.id)}
+          />
         ))}
       </div>
+    </div>
+  );
+}
+
+interface DogCardProps {
+  dog: Dog;
+  onSelect: (dog: Dog) => void;
+  isSelected: boolean;
+}
+
+// TODO: What would be cool is if you could just click on the image of the dog and it would
+// do a little animation of a heart appearing
+// TODO: Object cover looks really good here for most dogs, but some dogs are cut off...
+function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
+  return (
+    <div key={dog.id} className="space-y-2">
+      <img
+        src={dog.img}
+        alt={dog.name}
+        className="h-64 w-full rounded-md bg-top object-cover"
+      />
+      <div className="text-lg">
+        <span className="font-bold">{dog.name} </span>
+        <span className="text-sm">({dog.breed})</span>
+      </div>
+
+      <ul>
+        <li>Age: {dog.age}</li>
+        <li>Zip: {dog.zip_code}</li>
+      </ul>
+
+      <Button
+        className="mt-4 w-full font-semibold"
+        variant={isSelected ? "default" : "outline"}
+        onClick={() => onSelect(dog)}
+      >
+        {isSelected ? (
+          <>
+            <HeartIcon className="size-4 text-rose-500" />
+            <span>Selected</span>
+          </>
+        ) : (
+          <>
+            Pick me! <HeartIcon className="size-4 text-rose-500" />
+          </>
+        )}
+      </Button>
     </div>
   );
 }
@@ -274,7 +324,7 @@ function SearchForm({ className, onSubmit }: SearchFormProps) {
 
         {/* Submit */}
         <Button className="w-full">
-          <BoneIcon className="size-4" /> Go!
+          <BoneIcon className="size-4" /> Fetch!
         </Button>
       </form>
     </Form>
