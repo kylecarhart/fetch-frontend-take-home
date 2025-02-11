@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/command";
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
@@ -19,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Dog, SearchDogsParams } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import {
   ArrowLeft,
@@ -65,6 +66,14 @@ function RouteComponent() {
   });
   const [selectedDogs, setSelectedDogs] = useState<Dog[]>([]);
 
+  // Mutations
+  const matchMutation = useMutation({
+    mutationFn: () => client.matchDogs(selectedDogs.map((d) => d.id)),
+    onSuccess: () => {
+      // Invalidate and refetch
+    },
+  });
+
   const handleLogout = () => {
     auth.logout().then(() => {
       router.invalidate().finally(() => {
@@ -89,7 +98,6 @@ function RouteComponent() {
   const { data: searchDogsResponse } = useQuery({
     queryKey: ["searchDogs", dogSearchParams],
     queryFn: () => {
-      console.log(dogSearchParams);
       return client.searchDogs({
         ...(dogSearchParams.breeds && { breeds: dogSearchParams.breeds }),
         ...(dogSearchParams.ageMin && { ageMin: dogSearchParams.ageMin }),
@@ -111,8 +119,12 @@ function RouteComponent() {
     setDogSearchParams(data);
   }
 
+  function handleMatch() {
+    matchMutation.mutate();
+  }
+
   return (
-    <div className="grid h-screen grid-cols-[350px,1fr] gap-4">
+    <div className="grid h-screen grid-cols-[350px,1fr]">
       {/* Sidebar */}
       <div className="flex flex-col space-y-6 border-r p-8">
         <div className="flex items-center gap-2">
@@ -131,14 +143,24 @@ function RouteComponent() {
         </Button>
       </div>
       {/* Main */}
-      <div className="grid grid-cols-3 gap-6 overflow-y-scroll p-8 xl:grid-cols-5">
-        {dogs?.data?.map((dog) => (
-          <DogCard
-            dog={dog}
-            onSelect={handleSelectDog}
-            isSelected={selectedDogs.some((d) => d.id === dog.id)}
-          />
-        ))}
+      <div className="overflow-y-scroll">
+        <div className="grid grid-cols-3 gap-6 p-8 xl:grid-cols-5">
+          {dogs?.data?.map((dog) => (
+            <DogCard
+              key={dog.id}
+              dog={dog}
+              onSelect={handleSelectDog}
+              isSelected={selectedDogs.some((d) => d.id === dog.id)}
+            />
+          ))}
+        </div>
+        {selectedDogs.length > 0 && (
+          <div className="sticky bottom-0 border-t bg-white py-2 text-center">
+            <Button className="" variant="ghost" onClick={handleMatch}>
+              Match with {selectedDogs.length} dogs!
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -245,8 +267,8 @@ function SearchForm({ className, onSubmit }: SearchFormProps) {
           {/* TODO: It would probably be a better user experience if we had a couple of preset age ranges */}
           {/* ie: Puppy (0-1), Young Adult (2-4), Adult (5-8), Senior (9-15) */}
           <div>
-            <FormLabel>Age Range</FormLabel>
-            <div className="flex gap-2">
+            <Label>Age Range</Label>
+            <div className="mt-2 flex gap-2">
               <FormField
                 control={form.control}
                 name="ageMin"
@@ -360,9 +382,9 @@ function Combobox({ values, onChange, breeds }: ComboboxProps) {
               ? values.map((value) => (
                   // TODO: We need to figure out how to go to another tab index when removing a dom element
                   <Badge
+                    key={value}
                     tabIndex={0}
                     className="inline-flex items-center gap-1"
-                    key={value}
                     onClick={(e) => {
                       e.stopPropagation();
                       onChange(values.filter((b) => b !== value));

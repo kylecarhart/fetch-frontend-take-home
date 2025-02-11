@@ -150,7 +150,7 @@ async function getDogs(dogIds: string[]): Promise<Dog[]> {
  * @param dogIds - The IDs of the dogs to match
  * @returns The response from the API
  */
-async function matchDog(dogIds: string[]): Promise<Match> {
+async function matchDogs(dogIds: string[]): Promise<Match> {
   const res = await request("/dogs/match", {
     method: "POST",
     body: JSON.stringify(dogIds),
@@ -206,7 +206,7 @@ export const client = {
   getBreeds,
   searchDogs,
   getDogs,
-  matchDog,
+  matchDogs,
   getLocations,
   searchLocations,
 };
