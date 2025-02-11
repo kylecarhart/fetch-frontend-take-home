@@ -131,7 +131,7 @@ function RouteComponent() {
         </Button>
       </div>
       {/* Main */}
-      <div className="grid grid-cols-2 gap-6 overflow-y-scroll p-8 xl:grid-cols-3">
+      <div className="grid grid-cols-3 gap-6 overflow-y-scroll p-8 xl:grid-cols-5">
         {dogs?.data?.map((dog) => (
           <DogCard
             dog={dog}
@@ -153,26 +153,27 @@ interface DogCardProps {
 // TODO: What would be cool is if you could just click on the image of the dog and it would
 // do a little animation of a heart appearing
 // TODO: Object cover looks really good here for most dogs, but some dogs are cut off...
+// TODO: Could maybe do subgrid for the button alignment instead of flex
 function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
   return (
-    <div key={dog.id} className="space-y-2">
+    <div key={dog.id} className="flex h-full flex-col">
       <img
         src={dog.img}
         alt={dog.name}
-        className="h-64 w-full rounded-md bg-top object-cover"
+        className="aspect-square w-full rounded-md bg-top object-cover"
       />
       <div>
         <span className="text-lg font-bold">{dog.name} </span>
         <span className="text-sm">({dog.breed})</span>
       </div>
 
-      <ul>
+      <ul className="flex-1">
         <li>Age: {dog.age}</li>
         <li>Zip: {dog.zip_code}</li>
       </ul>
 
       <Button
-        className="mt-4 w-full font-semibold"
+        className="mt-4 w-full self-end font-semibold"
         variant={isSelected ? "default" : "outline"}
         onClick={() => onSelect(dog)}
       >
