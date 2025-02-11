@@ -85,7 +85,7 @@ export interface SearchDogsParams {
   /** Starting index of results to return */
   from?: number;
   /** Sort order of results */
-  sort?: ModelSortDirections<Dog> & (string & {}); // Cool intellisense trick ;)
+  sort?: ModelSortDirections<Dog>;
 }
 
 /**

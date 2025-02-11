@@ -117,7 +117,7 @@ async function searchDogs(
     searchParams.append("size", params.size.toString());
   }
   if (params.from) {
-    searchParams.append("from", params.from);
+    searchParams.append("from", params.from.toString());
   }
   if (params.sort) {
     searchParams.append("sort", params.sort);
