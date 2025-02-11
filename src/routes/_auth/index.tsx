@@ -9,6 +9,13 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,12 +72,15 @@ function RouteComponent() {
     sort: "breed:asc",
   });
   const [selectedDogs, setSelectedDogs] = useState<Dog[]>([]);
+  const [dogMatch, setDogMatch] = useState<Dog>();
 
-  // Mutations
+  // Match mutation
   const matchMutation = useMutation({
     mutationFn: () => client.matchDogs(selectedDogs.map((d) => d.id)),
-    onSuccess: () => {
-      // Invalidate and refetch
+    onSuccess: async (match) => {
+      // Get the dog that was matched and set
+      const dogs = await client.getDogs([match.match]);
+      setDogMatch(dogs[0]);
     },
   });
 
@@ -162,6 +172,14 @@ function RouteComponent() {
           </div>
         )}
       </div>
+      {dogMatch && (
+        <MatchDialog
+          className="sm:max-w-[25vw]"
+          onOpenChange={() => setDogMatch(undefined)}
+          open={!!dogMatch}
+          dog={dogMatch}
+        />
+      )}
     </div>
   );
 }
@@ -438,5 +456,32 @@ function Combobox({ values, onChange, breeds }: ComboboxProps) {
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+interface MatchDialogProps {
+  dog: Dog;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  className?: string;
+}
+
+function MatchDialog({ dog, open, onOpenChange, className }: MatchDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={cn("", className)}>
+        <DialogHeader>
+          <DialogTitle>You matched with {dog.name}!</DialogTitle>
+          <DialogDescription>
+            {dog.name} is a {dog.breed} and is {dog.age} years old.
+          </DialogDescription>
+        </DialogHeader>
+        <img
+          src={dog.img}
+          alt={dog.name}
+          className="aspect-square w-full rounded-md bg-top object-cover"
+        />
+      </DialogContent>
+    </Dialog>
   );
 }
