@@ -58,10 +58,10 @@ function RouteComponent() {
     breeds: [],
     ageMin: 0,
     ageMax: 15,
+    // from: 0,
     // zipCodes: [],
     // size: 25,
-    // from: 0,
-    // sort: "asc",
+    sort: "breed:asc",
   });
   const [selectedDogs, setSelectedDogs] = useState<Dog[]>([]);
 
@@ -97,7 +97,7 @@ function RouteComponent() {
         // ...(dogSearchParams.zipCodes && { zipCodes: dogSearchParams.zipCodes }),
         // ...(dogSearchParams.size && { size: dogSearchParams.size }),
         // ...(dogSearchParams.from && { from: dogSearchParams.from }),
-        // ...(dogSearchParams.sort && { sort: dogSearchParams.sort }),
+        ...(dogSearchParams.sort && { sort: dogSearchParams.sort }),
       });
     },
   });
@@ -161,8 +161,8 @@ function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
         alt={dog.name}
         className="h-64 w-full rounded-md bg-top object-cover"
       />
-      <div className="text-lg">
-        <span className="font-bold">{dog.name} </span>
+      <div>
+        <span className="text-lg font-bold">{dog.name} </span>
         <span className="text-sm">({dog.breed})</span>
       </div>
 
@@ -176,16 +176,8 @@ function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
         variant={isSelected ? "default" : "outline"}
         onClick={() => onSelect(dog)}
       >
-        {isSelected ? (
-          <>
-            <HeartIcon className="size-4 text-rose-500" />
-            <span>Selected</span>
-          </>
-        ) : (
-          <>
-            Pick me! <HeartIcon className="size-4 text-rose-500" />
-          </>
-        )}
+        <HeartIcon className="size-4 text-rose-500" />
+        {isSelected ? <span>Selected!</span> : <span>Pick me!</span>}
       </Button>
     </div>
   );

@@ -27,3 +27,6 @@ Deployments to the `main` branch will be deployed to the production environment 
   - Tanstack Query (formerly React Query)
   - Tanstack Router
   - React Suspense
+- If given more time, I would:
+  - Make the UI more cohesive
+  - Add infinite scroll to the search results

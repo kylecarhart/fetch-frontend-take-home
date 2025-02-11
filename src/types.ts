@@ -83,7 +83,16 @@ export interface SearchDogsParams {
   /** Number of results to return */
   size?: number;
   /** Starting index of results to return */
-  from?: string;
+  from?: number;
   /** Sort order of results */
-  sort?: string;
+  sort?: ModelSortDirections<Dog> & (string & {}); // Cool intellisense trick ;)
 }
+
+/**
+ * Helper type to provide a sort direction for any given model.
+ * TODO: Under the assumption you can do this for any field.
+ */
+export type ModelSortDirections<T> = SortDirection<
+  keyof T extends string ? keyof T : never
+>;
+export type SortDirection<T extends string> = `${T}:asc` | `${T}:desc`;
