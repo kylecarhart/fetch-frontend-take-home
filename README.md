@@ -2,6 +2,15 @@
 
 View the [Fetch Frontend Take-Home Live Site](https://fetch-frontend-take-home.pages.dev).
 
+## Main Features
+
+- Tanstack Query
+  - Infinite scrolling
+- Tanstack Router
+- React Suspense
+- React Hook Form
+- Shadcn UI
+
 ## Requirements
 
 See [REQUIREMENTS.md](REQUIREMENTS.md)
@@ -20,11 +29,3 @@ pnpm preview # preview prod build
 ## Contributing
 
 Deployments to the `main` branch will be deployed to the production environment in cloudflare.
-
-## Personal Notes
-
-- Got to try out a bunch of new things:
-  - Tanstack Query (formerly React Query)
-    - Infinite scrolling
-  - Tanstack Router
-  - React Suspense

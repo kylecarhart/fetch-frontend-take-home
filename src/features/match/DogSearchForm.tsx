@@ -49,6 +49,9 @@ interface DogSearchFormProps {
   onSubmit: (data: DogsSearchParams) => void;
 }
 
+/**
+ * Form for searching for dogs.
+ */
 export function DogSearchForm({ className, onSubmit }: DogSearchFormProps) {
   const { data: breeds } = useSuspenseQuery({
     queryKey: ["breeds"],

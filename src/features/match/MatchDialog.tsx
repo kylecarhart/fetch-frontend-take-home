@@ -15,6 +15,9 @@ interface MatchDialogProps {
   className?: string;
 }
 
+/**
+ * Popup that appears when you are matched with a dog.
+ */
 export function MatchDialog({
   dog,
   open,
