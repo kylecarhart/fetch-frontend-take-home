@@ -16,7 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Form, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -24,6 +30,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Dog, SearchDogsParams } from "@/types";
@@ -44,8 +57,9 @@ import {
   XIcon,
 } from "lucide-react";
 import * as React from "react";
-import { Fragment, Suspense, useState } from "react";
+import { Fragment, Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useInView } from "react-intersection-observer";
 import { z } from "zod";
 import { useAuth } from "../../auth";
 
@@ -148,6 +162,18 @@ function RouteComponent() {
     },
   });
 
+  const { ref, inView } = useInView({
+    /* Optional options */
+    threshold: 0.5,
+    delay: 250,
+  });
+
+  useEffect(() => {
+    if (inView) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, inView]);
+
   function onSubmit(data: SearchDogsParams) {
     setDogSearchParams(data);
   }
@@ -189,9 +215,9 @@ function RouteComponent() {
                 />
               ));
             })}
+            <DogCardSkeleton ref={ref} />
           </>
         </div>
-        <Button onClick={() => fetchNextPage()}>Fetch Next Page</Button>
         {selectedDogs.length > 0 && (
           <div className="sticky bottom-0 border-t bg-white py-2 text-center">
             <Button className="" variant="ghost" onClick={handleMatch}>
@@ -276,9 +302,14 @@ function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
   );
 }
 
-function DogCardSkeleton() {
+interface DogCardSkeletonProps
+  extends React.DetailedHTMLProps<
+    React.HTMLAttributes<HTMLDivElement>,
+    HTMLDivElement
+  > {}
+function DogCardSkeleton({ ...props }: DogCardSkeletonProps) {
   return (
-    <div className="flex h-full flex-col justify-between gap-1">
+    <div className="flex h-full flex-col justify-between gap-1" {...props}>
       <Skeleton className="aspect-square w-full rounded-md" />
       <Skeleton className="h-4 w-1/2" />
       <Skeleton className="h-4 w-1/4" />
@@ -289,18 +320,18 @@ function DogCardSkeleton() {
 
 interface SearchFormProps {
   className?: string;
-  onSubmit: (data: z.infer<typeof SearchDogsSchema>) => void;
+  onSubmit: (data: SearchDogsParams) => void;
 }
 
 const SearchDogsSchema = z.object({
   breeds: z.array(z.string()).optional(),
   ageMin: z.coerce.number().optional(),
   ageMax: z.coerce.number().optional(),
+  sort: z.string().optional(),
   // zipCodes: z.array(z.string()).optional(),
   // size: z.number().optional(),
   // from: z.string().optional(),
-  // sort: z.string().optional(),
-}) satisfies z.ZodType<SearchDogsParams>;
+});
 
 function SearchForm({ className, onSubmit }: SearchFormProps) {
   const { data: breeds } = useSuspenseQuery({
@@ -308,18 +339,25 @@ function SearchForm({ className, onSubmit }: SearchFormProps) {
     queryFn: client.getBreeds,
   });
 
-  const form = useForm<z.infer<typeof SearchDogsSchema>>({
+  const form = useForm<SearchDogsParams>({
     resolver: zodResolver(SearchDogsSchema),
     defaultValues: {
       breeds: [],
       ageMin: 0,
       ageMax: 15,
+      sort: "breed:asc",
       // zipCodes: [],
       // size: 25,
       // from: "0",
-      // sort: "asc",
     },
   });
+
+  // Reset the form when the form is submitted so the submit button is disabled
+  React.useEffect(() => {
+    if (form.formState.isSubmitSuccessful) {
+      form.reset(form.getValues());
+    }
+  }, [form, form.formState.isSubmitSuccessful, form.getValues]);
 
   return (
     <Form {...form}>
@@ -392,8 +430,9 @@ function SearchForm({ className, onSubmit }: SearchFormProps) {
               </FormItem>
             )}
           /> */}
+
           {/* Sort */}
-          {/* <FormField
+          <FormField
             control={form.control}
             name="sort"
             render={({ field }) => (
@@ -409,17 +448,17 @@ function SearchForm({ className, onSubmit }: SearchFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="asc">Ascending</SelectItem>
-                    <SelectItem value="desc">Descending</SelectItem>
+                    <SelectItem value="breed:asc">Breed Ascending</SelectItem>
+                    <SelectItem value="breed:desc">Breed Descending</SelectItem>
                   </SelectContent>
                 </Select>
               </FormItem>
-            )} 
-          /> */}
+            )}
+          />
         </div>
 
         {/* Submit */}
-        <Button className="w-full">
+        <Button className="w-full" disabled={!form.formState.isDirty}>
           <BoneIcon className="size-4" /> Fetch!
         </Button>
       </form>

@@ -23,10 +23,8 @@ Deployments to the `main` branch will be deployed to the production environment 
 
 ## Personal Notes
 
-- This took me a good bit longer to develop since I wanted to try out some new things:
+- Got to try out a bunch of new things:
   - Tanstack Query (formerly React Query)
+    - Infinite scrolling
   - Tanstack Router
   - React Suspense
-- If given more time, I would:
-  - Make the UI more cohesive
-  - Add infinite scroll to the search results
