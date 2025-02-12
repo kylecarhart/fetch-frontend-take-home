@@ -1,5 +1,6 @@
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { useAuth } from "./auth";
+import { TooltipProvider } from "./components/ui/tooltip";
 import { routeTree } from "./routeTree.gen";
 
 // Create a new router instance
@@ -16,5 +17,9 @@ interface Props {}
 
 export default function App({}: Props) {
   const auth = useAuth();
-  return <RouterProvider router={router} context={{ auth }} />;
+  return (
+    <TooltipProvider>
+      <RouterProvider router={router} context={{ auth }} />
+    </TooltipProvider>
+  );
 }

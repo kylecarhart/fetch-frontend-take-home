@@ -1,66 +1,18 @@
 import { client } from "@/clients/client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DogCard, DogCardSkeleton } from "@/features/match/DogCard";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+  DogSearchForm,
+  SearchFormSkeleton,
+} from "@/features/match/DogSearchForm";
+import { MatchDialog } from "@/features/match/MatchDialog";
 import { cn } from "@/lib/utils";
 import { Dog, SearchDogsParams } from "@/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import {
-  ArrowLeft,
-  BoneIcon,
-  Check,
-  ChevronsUpDown,
-  DogIcon,
-  HeartIcon,
-  XIcon,
-} from "lucide-react";
-import * as React from "react";
-import { Fragment, Suspense, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { ArrowLeft, ArrowLeftIcon, DogIcon, MenuIcon } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { z } from "zod";
 import { useAuth } from "../../auth";
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -94,8 +46,9 @@ function RouteComponent() {
   });
   const [selectedDogs, setSelectedDogs] = useState<Dog[]>([]);
   const [dogMatch, setDogMatch] = useState<Dog>();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Match mutation
+  // Match mutation to match with the selected dogs
   const matchMutation = useMutation({
     mutationFn: () => client.matchDogs(selectedDogs.map((d) => d.id)),
     onSuccess: async (match) => {
@@ -105,13 +58,14 @@ function RouteComponent() {
     },
   });
 
-  const handleLogout = () => {
+  // Logout and redirect
+  function handleLogout() {
     auth.logout().then(() => {
       router.invalidate().finally(() => {
         navigate({ to: "/" });
       });
     });
-  };
+  }
 
   /**
    * Adds/removes dogs from the selected dogs list.
@@ -162,38 +116,68 @@ function RouteComponent() {
     },
   });
 
+  // Detect when skeleton is in view, and fetch more dogs (infinite scroll)
   const { ref, inView } = useInView({
-    /* Optional options */
     threshold: 0.5,
     delay: 250,
   });
 
+  // Fetch more dogs when the skeleton is in view
   useEffect(() => {
     if (inView) {
       fetchNextPage();
     }
   }, [fetchNextPage, inView]);
 
+  // Submit the search form
   function onSubmit(data: SearchDogsParams) {
     setDogSearchParams(data);
+    setIsSidebarOpen(false);
+    // TODO: Add search params to the url
   }
 
+  // Match with the selected dogs
   function handleMatch() {
     matchMutation.mutate();
   }
 
+  // Clear the selected dogs
+  function handleClear() {
+    setSelectedDogs([]);
+  }
+
   return (
-    <div className="grid h-screen grid-cols-[350px,1fr]">
+    <div className="grid h-screen md:grid-cols-[350px,1fr]">
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className={cn(
+          "fixed left-4 top-4 z-10 rounded-full border border-gray-200 bg-white p-2 shadow-md md:hidden",
+          isSidebarOpen && "hidden",
+        )}
+      >
+        <MenuIcon className="size-6" />
+      </button>
       {/* Sidebar */}
-      <div className="flex flex-col space-y-6 border-r p-8">
+      <div
+        className={cn(
+          "fixed bottom-0 top-0 z-10 flex -translate-x-full flex-col space-y-6 border-r bg-white p-8 transition-transform duration-300 sm:max-w-[350px] md:relative md:translate-x-0",
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
         <div className="flex items-center gap-2">
           <DogIcon className="size-6" />
           <h1 className="text-2xl font-bold">Shelter Match</h1>
+          <button
+            className="ml-auto block md:hidden"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            <ArrowLeftIcon className="size-6" />
+          </button>
         </div>
 
         <div className="flex-1">
           <Suspense fallback={<SearchFormSkeleton />}>
-            <SearchForm onSubmit={onSubmit} />
+            <DogSearchForm onSubmit={onSubmit} />
           </Suspense>
         </div>
 
@@ -203,7 +187,7 @@ function RouteComponent() {
       </div>
       {/* Main */}
       <div className="overflow-y-scroll">
-        <div className="grid grid-cols-3 gap-x-8 gap-y-12 p-8 xl:grid-cols-5 2xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-12 p-8 xl:grid-cols-5 2xl:grid-cols-6">
           <>
             {dogs?.pages.map((page) => {
               return page.dogs.map((dog) => (
@@ -219,9 +203,12 @@ function RouteComponent() {
           </>
         </div>
         {selectedDogs.length > 0 && (
-          <div className="sticky bottom-0 border-t bg-white py-2 text-center">
-            <Button className="" variant="ghost" onClick={handleMatch}>
+          <div className="sticky bottom-0 space-x-2 border-t bg-white py-4 text-center">
+            <Button className="" variant="default" onClick={handleMatch}>
               Match with {selectedDogs.length} dogs!
+            </Button>
+            <Button className="" variant="ghost" onClick={handleClear}>
+              Clear dogs
             </Button>
           </div>
         )}
@@ -235,355 +222,5 @@ function RouteComponent() {
         />
       )}
     </div>
-  );
-}
-
-// interface DogCardGridProps {
-//   searchDogsResponse: SearchDogsResponse | undefined;
-// }
-
-// function DogCardGrid({ searchDogsResponse }: DogCardGridProps) {
-//   const dogs = useSuspenseQuery({
-//     queryKey: ["dogs", searchDogsResponse?.resultIds],
-//     queryFn: () => client.getDogs(searchDogsResponse?.resultIds ?? []),
-//   });
-
-//   return (
-//     <>
-//       {dogs?.data?.map((dog) => (
-//         <DogCard
-//           key={dog.id}
-//           dog={dog}
-//           onSelect={() => {}}
-//           isSelected={false}
-//         />
-//       ))}
-//     </>
-//   );
-// }
-
-interface DogCardProps {
-  dog: Dog;
-  onSelect: (dog: Dog) => void;
-  isSelected: boolean;
-}
-
-// TODO: What would be cool is if you could just click on the image of the dog and it would
-// do a little animation of a heart appearing
-// TODO: Object cover looks really good here for most dogs, but some dogs are cut off...
-// TODO: Could maybe do subgrid for the button alignment instead of flex
-function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
-  return (
-    <div key={dog.id} className="flex h-full flex-col">
-      <img
-        src={dog.img}
-        alt={dog.name}
-        className="aspect-square w-full rounded-md bg-top object-cover"
-      />
-      <div>
-        <span className="text-lg font-bold">{dog.name} </span>
-        <span className="text-sm">({dog.breed})</span>
-      </div>
-
-      <ul className="flex-1">
-        <li>Age: {dog.age}</li>
-        <li>Zip: {dog.zip_code}</li>
-      </ul>
-
-      <Button
-        className="mt-4 w-full self-end font-semibold"
-        variant={isSelected ? "default" : "outline"}
-        onClick={() => onSelect(dog)}
-      >
-        <HeartIcon className="size-4 text-rose-500" />
-        {isSelected ? <span>Selected!</span> : <span>Pick me!</span>}
-      </Button>
-    </div>
-  );
-}
-
-interface DogCardSkeletonProps
-  extends React.DetailedHTMLProps<
-    React.HTMLAttributes<HTMLDivElement>,
-    HTMLDivElement
-  > {}
-function DogCardSkeleton({ ...props }: DogCardSkeletonProps) {
-  return (
-    <div className="flex h-full flex-col justify-between gap-1" {...props}>
-      <Skeleton className="aspect-square w-full rounded-md" />
-      <Skeleton className="h-4 w-1/2" />
-      <Skeleton className="h-4 w-1/4" />
-      <Skeleton className="h-8 w-full" />
-    </div>
-  );
-}
-
-interface SearchFormProps {
-  className?: string;
-  onSubmit: (data: SearchDogsParams) => void;
-}
-
-const SearchDogsSchema = z.object({
-  breeds: z.array(z.string()).optional(),
-  ageMin: z.coerce.number().optional(),
-  ageMax: z.coerce.number().optional(),
-  sort: z.string().optional(),
-  // zipCodes: z.array(z.string()).optional(),
-  // size: z.number().optional(),
-  // from: z.string().optional(),
-});
-
-function SearchForm({ className, onSubmit }: SearchFormProps) {
-  const { data: breeds } = useSuspenseQuery({
-    queryKey: ["breeds"],
-    queryFn: client.getBreeds,
-  });
-
-  const form = useForm<SearchDogsParams>({
-    resolver: zodResolver(SearchDogsSchema),
-    defaultValues: {
-      breeds: [],
-      ageMin: 0,
-      ageMax: 15,
-      sort: "breed:asc",
-      // zipCodes: [],
-      // size: 25,
-      // from: "0",
-    },
-  });
-
-  // Reset the form when the form is submitted so the submit button is disabled
-  React.useEffect(() => {
-    if (form.formState.isSubmitSuccessful) {
-      form.reset(form.getValues());
-    }
-  }, [form, form.formState.isSubmitSuccessful, form.getValues]);
-
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className={cn("space-y-8", className)}
-      >
-        <div className="space-y-4">
-          {/* Breed */}
-          <FormField
-            control={form.control}
-            name="breeds"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Breeds</FormLabel>
-                <Combobox
-                  values={field.value}
-                  onChange={field.onChange}
-                  breeds={breeds}
-                />
-                {/* <FormMessage /> */}
-              </FormItem>
-            )}
-          />
-          {/* Age Range */}
-          {/* TODO: It would probably be a better user experience if we had a couple of preset age ranges */}
-          {/* ie: Puppy (0-1), Young Adult (2-4), Adult (5-8), Senior (9-15) */}
-          <div>
-            <Label>Age Range</Label>
-            <div className="mt-2 flex gap-2">
-              <FormField
-                control={form.control}
-                name="ageMin"
-                render={({ field }) => (
-                  <Input {...field} type="number" placeholder="0" />
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="ageMax"
-                render={({ field }) => (
-                  <Input {...field} type="number" placeholder="15" />
-                )}
-              />
-            </div>
-          </div>
-          {/* Zip Codes */}
-          {/* <FormField
-            control={form.control}
-            name="zipCodes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Zip Codes</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="Enter zip codes" />
-                </FormControl>
-              </FormItem>
-            )}
-          /> */}
-          {/* Size */}
-          {/* <FormField
-            control={form.control}
-            name="size"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Results Per Page</FormLabel>
-                <FormControl>
-                  <Input {...field} type="number" placeholder="10" />
-                </FormControl>
-              </FormItem>
-            )}
-          /> */}
-
-          {/* Sort */}
-          <FormField
-            control={form.control}
-            name="sort"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sort Order</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select sort order" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="breed:asc">Breed Ascending</SelectItem>
-                    <SelectItem value="breed:desc">Breed Descending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        {/* Submit */}
-        <Button className="w-full" disabled={!form.formState.isDirty}>
-          <BoneIcon className="size-4" /> Fetch!
-        </Button>
-      </form>
-    </Form>
-  );
-}
-
-function SearchFormSkeleton() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Fragment key={index}>
-          <Skeleton className="h-4 w-1/4" />
-          <Skeleton className="h-8 w-full" />
-        </Fragment>
-      ))}
-    </div>
-  );
-}
-
-interface ComboboxProps {
-  breeds: string[];
-  values: string[] | undefined;
-  onChange: (value: string[]) => void;
-}
-
-function Combobox({ values, onChange, breeds }: ComboboxProps) {
-  const [open, setOpen] = React.useState(false);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="h-min w-full justify-between"
-        >
-          <div className="flex flex-wrap gap-1">
-            {values && values.length > 0
-              ? values.map((value) => (
-                  // TODO: We need to figure out how to go to another tab index when removing a dom element
-                  <Badge
-                    key={value}
-                    tabIndex={0}
-                    className="inline-flex items-center gap-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onChange(values.filter((b) => b !== value));
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.stopPropagation();
-                        onChange(values.filter((b) => b !== value));
-                      }
-                    }}
-                  >
-                    <XIcon className="size-4" />
-                    {value}
-                  </Badge>
-                ))
-              : "Select breed..."}
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0">
-        <Command>
-          <CommandInput placeholder="Search breeds..." />
-          <CommandList>
-            <CommandEmpty>No breeds found.</CommandEmpty>
-            <CommandGroup>
-              {breeds &&
-                breeds.map((breed) => (
-                  <CommandItem
-                    key={breed}
-                    value={breed}
-                    onSelect={(currentValue) => {
-                      onChange(
-                        values?.includes(currentValue)
-                          ? values.filter((value) => value !== currentValue)
-                          : [...values!, currentValue],
-                      );
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        values?.includes(breed) ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    {breed}
-                  </CommandItem>
-                ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-interface MatchDialogProps {
-  dog: Dog;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  className?: string;
-}
-
-function MatchDialog({ dog, open, onOpenChange, className }: MatchDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("", className)}>
-        <DialogHeader>
-          <DialogTitle>You matched with {dog.name}!</DialogTitle>
-          <DialogDescription>
-            {dog.name} is a {dog.breed} and is {dog.age} years old.
-          </DialogDescription>
-        </DialogHeader>
-        <img
-          src={dog.img}
-          alt={dog.name}
-          className="aspect-square w-full rounded-md bg-top object-cover"
-        />
-      </DialogContent>
-    </Dialog>
   );
 }

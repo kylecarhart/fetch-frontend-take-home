@@ -9,6 +9,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { User } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,9 +74,19 @@ export function LoginForm({ className, onSuccess }: Props) {
             <h1 className="text-xl font-bold">Welcome to Shelter Match!</h1>
             <div className="text-sm">
               Don't have an account?{" "}
-              <a href="#" className="underline underline-offset-4">
-                Sign up
-              </a>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger>
+                  <a
+                    href="#"
+                    className="cursor-not-allowed underline underline-offset-4"
+                  >
+                    Sign up
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Sign up is currently disabled</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
           {/* Form */}
