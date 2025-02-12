@@ -1,11 +1,4 @@
-import {
-  Dog,
-  Location,
-  Match,
-  SearchDogsParams,
-  SearchDogsResponse,
-  SearchLocationsResponse,
-} from "../types";
+import { Dog, DogsSearch, DogsSearchParams, Match } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 export class UnauthorizedError extends Error {}
@@ -91,9 +84,7 @@ async function getBreeds(): Promise<string[]> {
  * @param params - The parameters for the search
  * @returns The response from the API
  */
-async function searchDogs(
-  params: SearchDogsParams,
-): Promise<SearchDogsResponse> {
+async function searchDogs(params: DogsSearchParams): Promise<DogsSearch> {
   const searchParams = new URLSearchParams();
 
   // Add breeds to the search params
@@ -133,9 +124,9 @@ async function searchDogs(
  * @returns The response from the API
  */
 async function getDogs(dogIds: string[]): Promise<Dog[]> {
-  // if (!dogIds.length) {
-  //   return Promise.resolve([]);
-  // }
+  if (dogIds.length === 0) {
+    return Promise.resolve([]);
+  }
 
   const res = await request("/dogs", {
     method: "POST",
@@ -164,41 +155,41 @@ async function matchDogs(dogIds: string[]): Promise<Match> {
  * @param zipCodes - The zip codes to get
  * @returns The response from the API
  */
-async function getLocations(zipCodes: string[]): Promise<Location[]> {
-  const res = await request("/locations", {
-    method: "POST",
-    body: JSON.stringify(zipCodes),
-  });
+// async function getLocations(zipCodes: string[]): Promise<Location[]> {
+//   const res = await request("/locations", {
+//     method: "POST",
+//     body: JSON.stringify(zipCodes),
+//   });
 
-  return res.json();
-}
+//   return res.json();
+// }
 
 /**
  * Search for locations from the API
  * @param params - The parameters for the search
  * @returns The response from the API
  */
-async function searchLocations(params: {
-  city?: string;
-  states?: string[];
-  geoBoundingBox?: {
-    top?: { lat: number; lon: number };
-    left?: { lat: number; lon: number };
-    bottom?: { lat: number; lon: number };
-    right?: { lat: number; lon: number };
-    bottom_left?: { lat: number; lon: number };
-    top_right?: { lat: number; lon: number };
-  };
-  size?: number;
-  from?: number;
-}): Promise<SearchLocationsResponse> {
-  const res = await request("/locations/search", {
-    method: "POST",
-    body: JSON.stringify(params),
-  });
+// async function searchLocations(params: {
+//   city?: string;
+//   states?: string[];
+//   geoBoundingBox?: {
+//     top?: { lat: number; lon: number };
+//     left?: { lat: number; lon: number };
+//     bottom?: { lat: number; lon: number };
+//     right?: { lat: number; lon: number };
+//     bottom_left?: { lat: number; lon: number };
+//     top_right?: { lat: number; lon: number };
+//   };
+//   size?: number;
+//   from?: number;
+// }): Promise<LocationsSearch> {
+//   const res = await request("/locations/search", {
+//     method: "POST",
+//     body: JSON.stringify(params),
+//   });
 
-  return res.json();
-}
+//   return res.json();
+// }
 
 export const client = {
   login,
@@ -207,6 +198,6 @@ export const client = {
   searchDogs,
   getDogs,
   matchDogs,
-  getLocations,
-  searchLocations,
+  // getLocations,
+  // searchLocations,
 };

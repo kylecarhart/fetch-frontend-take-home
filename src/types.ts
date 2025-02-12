@@ -51,7 +51,7 @@ export interface Match {
 }
 
 /** Response from searching locations */
-export interface SearchLocationsResponse {
+export interface LocationsSearch {
   /** Array of location objects matching search criteria */
   results: Location[];
   /** Total number of results (not just current page) */
@@ -59,7 +59,7 @@ export interface SearchLocationsResponse {
 }
 
 /** Response from searching dogs */
-export interface SearchDogsResponse {
+export interface DogsSearch {
   /** Array of dog IDs matching search criteria */
   resultIds: string[];
   /** Total number of results (not just current page) */
@@ -71,7 +71,7 @@ export interface SearchDogsResponse {
 }
 
 /** Parameters for searching dogs */
-export interface SearchDogsParams {
+export interface DogsSearchParams {
   /** Array of breeds to search for */
   breeds?: string[];
   /** Array of ZIP codes to search for */

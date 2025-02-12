@@ -19,7 +19,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreedsComboBox } from "@/features/match/BreedsComboBox";
 import { cn } from "@/lib/utils";
-import { SearchDogsParams } from "@/types";
+import { DogsSearchParams } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@radix-ui/react-label";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -46,7 +46,7 @@ const SearchDogsSchema = z
 
 interface DogSearchFormProps {
   className?: string;
-  onSubmit: (data: SearchDogsParams) => void;
+  onSubmit: (data: DogsSearchParams) => void;
 }
 
 export function DogSearchForm({ className, onSubmit }: DogSearchFormProps) {
@@ -55,7 +55,7 @@ export function DogSearchForm({ className, onSubmit }: DogSearchFormProps) {
     queryFn: client.getBreeds,
   });
 
-  const form = useForm<SearchDogsParams>({
+  const form = useForm<DogsSearchParams>({
     resolver: zodResolver(SearchDogsSchema),
     defaultValues: {
       breeds: [],

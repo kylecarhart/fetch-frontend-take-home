@@ -7,7 +7,7 @@ import {
 } from "@/features/match/DogSearchForm";
 import { MatchDialog } from "@/features/match/MatchDialog";
 import { cn } from "@/lib/utils";
-import { Dog, SearchDogsParams } from "@/types";
+import { Dog, DogsSearchParams } from "@/types";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ArrowLeftIcon, DogIcon, MenuIcon } from "lucide-react";
@@ -35,7 +35,7 @@ function RouteComponent() {
   const router = useRouter();
   const navigate = Route.useNavigate();
   const auth = useAuth();
-  const [dogSearchParams, setDogSearchParams] = useState<SearchDogsParams>({
+  const [dogSearchParams, setDogSearchParams] = useState<DogsSearchParams>({
     breeds: [],
     ageMin: 0,
     ageMax: 15,
@@ -93,7 +93,7 @@ function RouteComponent() {
       const from = pageParam * (dogSearchParams.size ?? DEFAULT_PAGE_SIZE);
 
       // Search for dogs matching the params
-      const searchDogsResponse = await client.searchDogs({
+      const dogsSearch = await client.searchDogs({
         ...(dogSearchParams.breeds && { breeds: dogSearchParams.breeds }),
         ...(dogSearchParams.ageMin && { ageMin: dogSearchParams.ageMin }),
         ...(dogSearchParams.ageMax && { ageMax: dogSearchParams.ageMax }),
@@ -104,15 +104,13 @@ function RouteComponent() {
       });
 
       // Get more info about the dogs returned from the search
-      const dogs = await client.getDogs([
-        ...(searchDogsResponse?.resultIds ?? []),
-      ]);
+      const dogs = await client.getDogs([...(dogsSearch?.resultIds ?? [])]);
 
-      return { dogs, searchDogsResponse };
+      return { dogs, dogsSearch };
     },
     initialPageParam: 0,
-    getNextPageParam: ({ dogs, searchDogsResponse }) => {
-      const params = new URLSearchParams(searchDogsResponse.next);
+    getNextPageParam: ({ dogs, dogsSearch }) => {
+      const params = new URLSearchParams(dogsSearch.next);
       const from = params.get("from");
       const pageSize = dogSearchParams.size ?? DEFAULT_PAGE_SIZE;
 
@@ -139,7 +137,7 @@ function RouteComponent() {
   }, [fetchNextPage, inView]);
 
   // Submit the search form
-  function onSubmit(data: SearchDogsParams) {
+  function onSubmit(data: DogsSearchParams) {
     setDogSearchParams(data);
     setIsSidebarOpen(false);
     // TODO: Add search params to the url
