@@ -228,7 +228,7 @@ function RouteComponent() {
       </div>
       {dogMatch && (
         <MatchDialog
-          className="sm:max-w-[25vw]"
+          className="sm:max-w-[400px]"
           onOpenChange={() => setDogMatch(undefined)}
           open={!!dogMatch}
           dog={dogMatch}
