@@ -83,7 +83,11 @@ function RouteComponent() {
   /**
    * Fetches dogs matching the search params, with infinite scrolling.
    */
-  const { data: dogs, fetchNextPage } = useInfiniteQuery({
+  const {
+    data: dogs,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
     queryKey: ["searchDogs", dogSearchParams],
     queryFn: async ({ pageParam }) => {
       const from = pageParam * (dogSearchParams.size ?? DEFAULT_PAGE_SIZE);
@@ -104,22 +108,27 @@ function RouteComponent() {
         ...(searchDogsResponse?.resultIds ?? []),
       ]);
 
-      return { dogs, next: searchDogsResponse?.next };
+      return { dogs, searchDogsResponse };
     },
     initialPageParam: 0,
-    getNextPageParam: (lastPage) => {
-      const params = new URLSearchParams(lastPage.next);
+    getNextPageParam: ({ dogs, searchDogsResponse }) => {
+      const params = new URLSearchParams(searchDogsResponse.next);
       const from = params.get("from");
-      return from
-        ? parseInt(from) / (dogSearchParams.size ?? DEFAULT_PAGE_SIZE)
-        : null;
+      const pageSize = dogSearchParams.size ?? DEFAULT_PAGE_SIZE;
+
+      // If we got back less dogs than the page size, theres no next page
+      if (dogs.length < pageSize) {
+        return undefined;
+      }
+
+      // Return the next page number
+      return from ? parseInt(from) / pageSize : undefined;
     },
   });
 
   // Detect when skeleton is in view, and fetch more dogs (infinite scroll)
   const { ref, inView } = useInView({
     threshold: 0.5,
-    delay: 250,
   });
 
   // Fetch more dogs when the skeleton is in view
@@ -199,7 +208,17 @@ function RouteComponent() {
                 />
               ));
             })}
-            <DogCardSkeleton ref={ref} />
+            {/* Only show the skeleton if there are more pages */}
+            {hasNextPage && <DogCardSkeleton ref={ref} />}
+
+            {/* Show a message if there are no dogs from the search */}
+            {dogs?.pages[0].dogs.length === 0 && (
+              <div className="col-span-full">
+                <p className="text-center text-sm text-gray-500">
+                  No dogs found... Try broadening your search.
+                </p>
+              </div>
+            )}
           </>
         </div>
         {selectedDogs.length > 0 && (
