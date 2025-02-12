@@ -22,8 +22,9 @@ async function request(endpoint: string, options: RequestInit = {}) {
 
   // If user is not logged in, reset state and reload.
   if (res.status === 401) {
-    localStorage.removeItem("auth.user");
-    window.location.reload();
+    alert("Unauthorized");
+    // localStorage.removeItem("auth.user");
+    // window.location.reload();
     // throw new UnauthorizedError();
   } else if (!res.ok) {
     throw res;
