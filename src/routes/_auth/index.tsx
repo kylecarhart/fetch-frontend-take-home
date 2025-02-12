@@ -203,7 +203,7 @@ function RouteComponent() {
       </div>
       {/* Main */}
       <div className="overflow-y-scroll">
-        <div className="grid grid-cols-3 gap-6 p-8 xl:grid-cols-5">
+        <div className="grid grid-cols-3 gap-x-8 gap-y-12 p-8 xl:grid-cols-5 2xl:grid-cols-6">
           <>
             {dogs?.pages.map((page) => {
               return page.dogs.map((dog) => (
