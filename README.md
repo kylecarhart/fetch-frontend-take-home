@@ -15,6 +15,7 @@ View the [Fetch Frontend Take-Home Live Site](https://fetch-frontend-take-home.p
 - Shadcn UI
 - Tailwind
 - Zod
+- Cloudflare Pages
 
 ## Requirements
 
