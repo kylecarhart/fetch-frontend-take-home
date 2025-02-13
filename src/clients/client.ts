@@ -1,7 +1,6 @@
 import { Dog, DogsSearch, DogsSearchParams, Match } from "../types";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
-export class UnauthorizedError extends Error {}
 
 /**
  * Fetch wrapper for the API
@@ -24,22 +23,12 @@ async function request(endpoint: string, options: RequestInit = {}) {
   if (res.status === 401) {
     localStorage.removeItem("auth.user");
     window.location.reload();
-    // throw new UnauthorizedError();
   } else if (!res.ok) {
     throw res;
   }
 
   return res;
 }
-
-/**
- * Check if an error is an API error, and not just a fetch error
- * @param e - The error to check
- * @returns True if the error is an API error
- */
-// export function isApiError(e: unknown): e is Response {
-//   return e instanceof Response;
-// }
 
 /**
  * Login to the API

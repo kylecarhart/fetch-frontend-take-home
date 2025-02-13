@@ -1,4 +1,4 @@
-import { LoginForm } from "@/forms/LoginForm";
+import { LoginForm } from "@/features/auth/LoginForm";
 import {
   createFileRoute,
   redirect,
@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 
-const fallback = "/dashboard" as const;
+const fallback = "/" as const;
 
 export const Route = createFileRoute("/login")({
   validateSearch: z.object({

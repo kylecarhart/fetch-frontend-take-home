@@ -23,6 +23,9 @@ interface BreedsComboBoxProps {
   onChange: (value: string[]) => void;
 }
 
+/**
+ * A combo box for selecting breeds. Supports multiple selection and search.
+ */
 export function BreedsComboBox({
   values,
   onChange,

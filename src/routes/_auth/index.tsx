@@ -1,19 +1,13 @@
-import { client } from "@/clients/client";
 import { Button } from "@/components/ui/button";
-import { DogCard, DogCardSkeleton } from "@/features/match/DogCard";
-import {
-  DogSearchForm,
-  SearchFormSkeleton,
-} from "@/features/match/DogSearchForm";
+import { DogCardGrid } from "@/features/match/DogCardGrid";
+import { DogSearchSidebar } from "@/features/match/DogSearchSidebar";
 import { MatchDialog } from "@/features/match/MatchDialog";
+import { useDogMatch } from "@/features/match/useDogMatch";
 import { cn } from "@/lib/utils";
-import { Dog, DogsSearchParams } from "@/types";
-import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, ArrowLeftIcon, DogIcon, MenuIcon } from "lucide-react";
-import { Suspense, useEffect, useState } from "react";
-import { useInView } from "react-intersection-observer";
-import { useAuth } from "../../auth";
+import { DogsSearchParams } from "@/types";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { MenuIcon } from "lucide-react";
+import { useState } from "react";
 
 const DEFAULT_PAGE_SIZE = 25;
 
@@ -31,110 +25,30 @@ export const Route = createFileRoute("/_auth/")({
   component: RouteComponent,
 });
 
+/**
+ * Dog matching page, gated by authentication.
+ */
 function RouteComponent() {
-  const router = useRouter();
-  const navigate = Route.useNavigate();
-  const auth = useAuth();
   const [dogSearchParams, setDogSearchParams] = useState<DogsSearchParams>({
     breeds: [],
     ageMin: 0,
     ageMax: 15,
-    // zipCodes: [],
     from: 0,
     size: DEFAULT_PAGE_SIZE,
     sort: "breed:asc",
-  });
-  const [selectedDogs, setSelectedDogs] = useState<Dog[]>([]);
-  const [dogMatch, setDogMatch] = useState<Dog>();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Match mutation to match with the selected dogs
-  const matchMutation = useMutation({
-    mutationFn: () => client.matchDogs(selectedDogs.map((d) => d.id)),
-    onSuccess: async (match) => {
-      // Get the dog that was matched and set
-      const dogs = await client.getDogs([match.match]);
-      setDogMatch(dogs[0]);
-    },
+    // zipCodes: [],
   });
 
-  // Logout and redirect
-  function handleLogout() {
-    auth.logout().then(() => {
-      router.invalidate().finally(() => {
-        navigate({ to: "/" });
-      });
-    });
-  }
-
-  /**
-   * Adds/removes dogs from the selected dogs list.
-   * @param dog
-   */
-  function handleSelectDog(dog: Dog) {
-    setSelectedDogs((prev) => {
-      if (prev.some((d) => d.id === dog.id)) {
-        return prev.filter((d) => d.id !== dog.id);
-      }
-      return [...prev, dog];
-    });
-  }
-
-  /**
-   * Fetches dogs matching the search params, with infinite scrolling.
-   */
   const {
-    data: dogs,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["searchDogs", dogSearchParams],
-    queryFn: async ({ pageParam }) => {
-      const from = pageParam * (dogSearchParams.size ?? DEFAULT_PAGE_SIZE);
+    selectDog,
+    selectedDogs,
+    clearSelectedDogs,
+    match,
+    matchedDog,
+    clearMatchedDog,
+  } = useDogMatch();
 
-      // Search for dogs matching the params
-      const dogsSearch = await client.searchDogs({
-        ...(dogSearchParams.breeds && { breeds: dogSearchParams.breeds }),
-        ...(dogSearchParams.ageMin && { ageMin: dogSearchParams.ageMin }),
-        ...(dogSearchParams.ageMax && { ageMax: dogSearchParams.ageMax }),
-        ...(dogSearchParams.size && { size: dogSearchParams.size }),
-        ...(from && { from }),
-        ...(dogSearchParams.sort && { sort: dogSearchParams.sort }),
-        // ...(dogSearchParams.zipCodes && { zipCodes: dogSearchParams.zipCodes }),
-      });
-
-      // Get more info about the dogs returned from the search
-      const dogs = await client.getDogs([...(dogsSearch?.resultIds ?? [])]);
-
-      return { dogs, dogsSearch };
-    },
-    initialPageParam: 0,
-    getNextPageParam: ({ dogs, dogsSearch }) => {
-      const params = new URLSearchParams(dogsSearch.next);
-      const from = params.get("from");
-      const pageSize = dogSearchParams.size ?? DEFAULT_PAGE_SIZE;
-
-      // If we got back less dogs than the page size, theres no next page
-      if (dogs.length < pageSize) {
-        return undefined;
-      }
-
-      // Return the next page number
-      return from ? parseInt(from) / pageSize : undefined;
-    },
-  });
-
-  // Detect when skeleton is in view, and fetch more dogs (infinite scroll)
-  const { ref, inView } = useInView({
-    threshold: 0.5,
-  });
-
-  // Fetch more dogs when the skeleton is in view
-  useEffect(() => {
-    if (inView) {
-      fetchNextPage();
-    }
-  }, [fetchNextPage, inView]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Submit the search form
   function onSubmit(data: DogsSearchParams) {
@@ -143,18 +57,9 @@ function RouteComponent() {
     // TODO: Add search params to the url
   }
 
-  // Match with the selected dogs
-  function handleMatch() {
-    matchMutation.mutate();
-  }
-
-  // Clear the selected dogs
-  function handleClear() {
-    setSelectedDogs([]);
-  }
-
   return (
     <div className="grid h-screen md:grid-cols-[350px,1fr]">
+      {/* Sidebar hamburger button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         className={cn(
@@ -164,78 +69,43 @@ function RouteComponent() {
       >
         <MenuIcon className="size-6" />
       </button>
-      {/* Sidebar */}
-      <div
+      {/* Search sidebar */}
+      <DogSearchSidebar
         className={cn(
-          "fixed bottom-0 top-0 z-10 flex -translate-x-full flex-col space-y-6 border-r bg-white p-8 transition-transform duration-300 sm:max-w-[350px] md:relative md:translate-x-0",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "fixed bottom-0 top-0 z-10 -translate-x-full transition-transform duration-300 sm:max-w-[350px] md:relative md:translate-x-0",
+          isSidebarOpen && "translate-x-0",
         )}
-      >
-        <div className="flex items-center gap-2">
-          <DogIcon className="size-6" />
-          <h1 className="text-2xl font-bold">Shelter Match</h1>
-          <button
-            className="ml-auto block md:hidden"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            <ArrowLeftIcon className="size-6" />
-          </button>
-        </div>
-
-        <div className="flex-1">
-          <Suspense fallback={<SearchFormSkeleton />}>
-            <DogSearchForm onSubmit={onSubmit} />
-          </Suspense>
-        </div>
-
-        <Button variant="ghost" onClick={handleLogout} className="self-start">
-          <ArrowLeft className="size-4" /> Logout
-        </Button>
-      </div>
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        onSearchSubmit={onSubmit}
+      />
       {/* Main */}
       <div className="overflow-y-scroll">
-        <div className="grid grid-cols-2 gap-x-8 gap-y-12 p-8 xl:grid-cols-5 2xl:grid-cols-6">
-          <>
-            {dogs?.pages.map((page) => {
-              return page.dogs.map((dog) => (
-                <DogCard
-                  key={dog.id}
-                  dog={dog}
-                  onSelect={handleSelectDog}
-                  isSelected={selectedDogs.some((d) => d.id === dog.id)}
-                />
-              ));
-            })}
-            {/* Only show the skeleton if there are more pages */}
-            {hasNextPage && <DogCardSkeleton ref={ref} />}
-
-            {/* Show a message if there are no dogs from the search */}
-            {dogs?.pages[0].dogs.length === 0 && (
-              <div className="col-span-full">
-                <p className="text-center text-sm text-gray-500">
-                  No dogs found... Try broadening your search.
-                </p>
-              </div>
-            )}
-          </>
-        </div>
+        {/* Dog card grid */}
+        <DogCardGrid
+          dogSearchParams={dogSearchParams}
+          selectedDogs={selectedDogs}
+          onSelectDog={selectDog}
+        />
+        {/* Match and clear buttons */}
         {selectedDogs.length > 0 && (
           <div className="sticky bottom-0 space-x-2 border-t bg-white py-4 text-center">
-            <Button className="" variant="default" onClick={handleMatch}>
+            <Button variant="default" onClick={match}>
               Match with {selectedDogs.length} dogs!
             </Button>
-            <Button className="" variant="ghost" onClick={handleClear}>
+            <Button variant="ghost" onClick={clearSelectedDogs}>
               Clear dogs
             </Button>
           </div>
         )}
       </div>
-      {dogMatch && (
+      {/* Popup for the matched dog */}
+      {matchedDog && (
         <MatchDialog
           className="sm:max-w-[400px]"
-          onOpenChange={() => setDogMatch(undefined)}
-          open={!!dogMatch}
-          dog={dogMatch}
+          onOpenChange={() => clearMatchedDog()}
+          open={!!matchedDog}
+          dog={matchedDog}
         />
       )}
     </div>

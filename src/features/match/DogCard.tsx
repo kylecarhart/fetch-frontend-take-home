@@ -10,10 +10,14 @@ interface DogCardProps {
   isSelected: boolean;
 }
 
-// TODO: What would be cool is if you could just click on the image of the dog and it would
-// do a little animation of a heart appearing
-// TODO: Object cover looks really good here for most dogs, but some dogs are cut off...
-// TODO: Could maybe do subgrid for the button alignment instead of flex
+/**
+ * A card for a dog that displays the dog's image, name, breed, age, and zip
+ * code.
+ *
+ * TODO: Add click animation on dog image that shows heart appearing
+ * TODO: Investigate object-cover cutting off some dog images
+ * TODO: Consider using subgrid instead of flex for button alignment
+ */
 export function DogCard({ dog, onSelect, isSelected }: DogCardProps) {
   return (
     <div key={dog.id} className="flex h-full flex-col">

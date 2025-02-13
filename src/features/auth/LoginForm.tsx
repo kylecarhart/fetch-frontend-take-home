@@ -32,6 +32,10 @@ const LoginFormSchema = z.object({
 });
 type LoginFormSchemaType = z.infer<typeof LoginFormSchema>;
 
+/**
+ * Login form. Will attempt to login the user on the server on submit. If
+ * successful, will call the `onSuccess` callback with the user info.
+ */
 export function LoginForm({ className, onSuccess }: Props) {
   const auth = useAuth();
 
