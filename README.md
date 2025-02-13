@@ -2,6 +2,8 @@
 
 View the [Fetch Frontend Take-Home Live Site](https://fetch-frontend-take-home.pages.dev).
 
+> When viewing from this site, please allow third-party cookies in your browser.
+
 <div align="center">
   <img src="https://github.com/user-attachments/assets/b1adf474-14ff-4e04-88b9-f8611296f39a" width="800" alt="Image" >
 </div>
@@ -45,4 +47,3 @@ Deployments to the `main` branch will be deployed to the production environment 
 - Add tests
 - Add CI/CD features like linting, formatting, pre-build, then deploy
 - Add git commit hooks like pre-commit and pre-push for linting, formatting, etc...
-- There is a bug/feature on iOS/Safari where the cookies are not being stored because of `SameSite None` and `Secure`. Resolution seems to be on the api side. See https://stackoverflow.com/questions/58525719/safari-not-sending-cookie-even-after-setting-samesite-none-secure
