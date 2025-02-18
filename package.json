@@ -6,13 +6,16 @@
   "scripts": {
     "build": "tsc -b && vite build",
     "dev": "vite",
+    "e2e": "dotenvx run -- playwright test",
+    "e2e:report": "dotenvx run -- playwright show-report",
+    "e2e:ui": "dotenvx run -- playwright test --ui",
     "lint": "eslint .",
     "prettier:check": "prettier --check .",
     "prettier:write": "prettier --write .",
-    "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "preview": "vite preview"
   },
   "dependencies": {
+    "@dotenvx/dotenvx": "^1.36.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-label": "^2.1.2",
@@ -29,6 +32,7 @@
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-helmet": "^6.1.0",
     "react-hook-form": "^7.54.2",
     "react-intersection-observer": "^9.15.1",
     "tailwind-merge": "^3.0.1",
@@ -43,6 +47,7 @@
     "@types/node": "^22.13.1",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "@types/react-helmet": "^6.1.11",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.19.0",
