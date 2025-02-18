@@ -19,7 +19,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { BreedsComboBox } from "@/features/match/BreedsComboBox";
 import { cn } from "@/lib/utils";
-import { DogsSearchParams } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Label } from "@radix-ui/react-label";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -29,12 +28,12 @@ import { useForm } from "react-hook-form";
 import { Fragment } from "react/jsx-runtime";
 import { z } from "zod";
 
-const SearchDogsSchema = z
+export const SearchDogsFormSchema = z
   .object({
     breeds: z.array(z.string()).optional(),
     ageMin: z.coerce.number().min(0).max(15).default(0),
     ageMax: z.coerce.number().min(0).max(15).default(15),
-    sort: z.string().optional(),
+    sort: z.string().default("breed:asc"),
     // zipCodes: z.array(z.string()).optional(),
     // size: z.number().optional(),
     // from: z.string().optional(),
@@ -44,27 +43,34 @@ const SearchDogsSchema = z
     message: "Min age must be less than max age",
   });
 
+export type SearchDogsForm = z.infer<typeof SearchDogsFormSchema>;
+
 interface DogSearchFormProps {
   className?: string;
-  onSubmit: (data: DogsSearchParams) => void;
+  defaultValues?: SearchDogsForm;
+  onSubmit: (data: SearchDogsForm) => void;
 }
 
 /**
  * Form for searching for dogs.
  */
-export function DogSearchForm({ className, onSubmit }: DogSearchFormProps) {
+export function DogSearchForm({
+  className,
+  onSubmit,
+  defaultValues,
+}: DogSearchFormProps) {
   const { data: breeds } = useSuspenseQuery({
     queryKey: ["breeds"],
     queryFn: client.getBreeds,
   });
 
-  const form = useForm<DogsSearchParams>({
-    resolver: zodResolver(SearchDogsSchema),
+  const form = useForm<SearchDogsForm>({
+    resolver: zodResolver(SearchDogsFormSchema),
     defaultValues: {
-      breeds: [],
-      ageMin: 0,
-      ageMax: 15,
-      sort: "breed:asc",
+      breeds: defaultValues?.breeds ?? [],
+      ageMin: defaultValues?.ageMin ?? 0,
+      ageMax: defaultValues?.ageMax ?? 15,
+      sort: defaultValues?.sort ?? "breed:asc",
       // zipCodes: [],
       // size: 25,
       // from: "0",

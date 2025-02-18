@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { DogCardGrid } from "@/features/match/DogCardGrid";
+import { SearchDogsFormSchema } from "@/features/match/DogSearchForm";
 import { DogSearchSidebar } from "@/features/match/DogSearchSidebar";
 import { MatchDialog } from "@/features/match/MatchDialog";
 import { useDogMatch } from "@/features/match/useDogMatch";
 import { cn } from "@/lib/utils";
 import { DogsSearchParams } from "@/types";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { MenuIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -23,19 +24,23 @@ export const Route = createFileRoute("/_auth/")({
     }
   },
   component: RouteComponent,
+  validateSearch: SearchDogsFormSchema,
 });
 
 /**
  * Dog matching page, gated by authentication.
  */
 function RouteComponent() {
+  const searchParams = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+
   const [dogSearchParams, setDogSearchParams] = useState<DogsSearchParams>({
-    breeds: [],
-    ageMin: 0,
-    ageMax: 15,
+    breeds: searchParams.breeds,
+    ageMin: searchParams.ageMin,
+    ageMax: searchParams.ageMax,
+    sort: searchParams.sort,
     from: 0,
     size: DEFAULT_PAGE_SIZE,
-    sort: "breed:asc",
     // zipCodes: [],
   });
 
@@ -53,8 +58,8 @@ function RouteComponent() {
   // Submit the search form
   function onSubmit(data: DogsSearchParams) {
     setDogSearchParams(data);
+    navigate({ search: data }); // Set the URL search params
     setIsSidebarOpen(false);
-    // TODO: Add search params to the url
   }
 
   return (
@@ -78,6 +83,7 @@ function RouteComponent() {
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         onSearchSubmit={onSubmit}
+        defaultValues={searchParams}
       />
       {/* Main */}
       <div className="overflow-y-scroll">

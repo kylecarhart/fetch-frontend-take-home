@@ -2,10 +2,10 @@ import { useAuth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import {
   DogSearchForm,
+  SearchDogsForm,
   SearchFormSkeleton,
 } from "@/features/match/DogSearchForm";
 import { cn } from "@/lib/utils";
-import { DogsSearchParams } from "@/types";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ArrowLeftIcon, DogIcon } from "lucide-react";
 import { Suspense } from "react";
@@ -13,8 +13,9 @@ import { Suspense } from "react";
 interface Props {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (isSidebarOpen: boolean) => void;
-  onSearchSubmit: (searchParams: DogsSearchParams) => void;
+  onSearchSubmit: (searchParams: SearchDogsForm) => void;
   className?: string;
+  defaultValues: SearchDogsForm;
 }
 
 /**
@@ -25,6 +26,7 @@ export function DogSearchSidebar({
   setIsSidebarOpen,
   onSearchSubmit,
   className,
+  defaultValues,
 }: Props) {
   const router = useRouter();
   const navigate = useNavigate();
@@ -58,7 +60,10 @@ export function DogSearchSidebar({
       {/* Search form */}
       <div className="flex-1">
         <Suspense fallback={<SearchFormSkeleton />}>
-          <DogSearchForm onSubmit={onSearchSubmit} />
+          <DogSearchForm
+            onSubmit={onSearchSubmit}
+            defaultValues={defaultValues}
+          />
         </Suspense>
       </div>
 
