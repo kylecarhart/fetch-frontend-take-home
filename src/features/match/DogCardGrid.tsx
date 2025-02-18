@@ -30,6 +30,8 @@ export function DogCardGrid({
    */
   const {
     data: dogs,
+    isError,
+    isLoading,
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
@@ -95,8 +97,16 @@ export function DogCardGrid({
         ));
       })}
 
-      {/* Only show the skeleton if there are more pages */}
+      {/* Only show the next page skeleton if there are more pages */}
       {hasNextPage && <DogCardSkeleton ref={ref} />}
+
+      {/* Error while retrieving dogs */}
+      {isError && (
+        <div>An unexpected error has occurred... Please try again later.</div>
+      )}
+
+      {/* Loading dogs */}
+      {isLoading && !isError && <DogCardSkeleton />}
 
       {/* Show a message if there are absolutely no dogs from the search */}
       {dogs?.pages[0].dogs.length === 0 && (
